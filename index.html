@@ -1,12 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Maps Carousel</title>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrossel Horizontal</title>
     <script type="module" src="/src/main.ts" defer></script>
+    <script type="module" src="/src/scripts.js"></script>
     <link rel="stylesheet" href="/src/styles.css" />
-  </head>
-  <body>
-    <div id="map-carousel"></div>
-  </body>
+</head>
+<body>
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    
+    <!-- Side Menu -->
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-header">Configurações</div>
+        
+        <div class="menu-item">
+            <div class="menu-item-icon">🎨</div>
+            <div class="menu-item-text">Tema</div>
+            <button class="theme-toggle" id="themeToggle">☀️ Light</button>
+        </div>
+        
+        <div class="menu-item">
+            <div class="menu-item-icon">ℹ️</div>
+            <div class="menu-item-text">Sobre</div>
+        </div>
+    </div>
+
+    <div class="carousel-container" id="carousel">
+        <button class="menu-button" id="menuButton">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+        </button>
+        
+        <div class="carousel-arrow left" id="leftArrow">‹</div>
+        <div class="carousel-arrow right" id="rightArrow">›</div>
+        
+        <div class="carousel-track-wrapper">
+            <div class="carousel-track" id="carouselTrack">
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Sidebar for shortcuts -->
+        <div class="sidebar">
+            <div class="sidebar-header">Atalhos Configurados</div>
+            <div class="sidebar-content" id="shortcutList">
+                <div class="shortcut-item active" data-id="0">
+                    <div class="shortcut-key-container">
+                        <input type="text" class="shortcut-key" value="F7" placeholder="Atalho" readonly>
+                        <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
+                    </div>
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Abrir configurações</textarea>
+                </div>
+                <div class="shortcut-item" data-id="1">
+                    <div class="shortcut-key-container">
+                        <input type="text" class="shortcut-key" value="Ctrl + F2" placeholder="Atalho" readonly>
+                        <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
+                    </div>
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Salvar arquivo</textarea>
+                </div>
+                <div class="shortcut-item" data-id="2">
+                    <div class="shortcut-key-container">
+                        <input type="text" class="shortcut-key" value="Alt + Tab" placeholder="Atalho" readonly>
+                        <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
+                    </div>
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Alternar entre janelas</textarea>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <button class="sidebar-btn add" id="addShortcut">+</button>
+                <button class="sidebar-btn remove" id="removeShortcut">-</button>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="content-area">
+            <div class="media-grid" id="mediaGrid">
+                <!-- Slot 1 - Exemplo com imagem -->
+                <div class="media-slot filled" data-slot="0">
+                    <div class="media-content">
+                        <img src="https://picsum.photos/400/300?random=1" alt="Mídia 1">
+                    </div>
+                    <button class="remove-media-btn" onclick="removeMedia(0)">×</button>
+                </div>
+
+                <!-- Slot 2 - Botão adicionar -->
+                <div class="media-slot" data-slot="1">
+                    <button class="add-media-btn" onclick="addMedia(1)">+</button>
+                </div>
+
+                <!-- Slot 3 - Exemplo com imagem -->
+                <div class="media-slot filled" data-slot="2">
+                    <div class="media-content">
+                        <img src="https://picsum.photos/400/300?random=2" alt="Mídia 3">
+                    </div>
+                    <button class="remove-media-btn" onclick="removeMedia(2)">×</button>
+                </div>
+
+                <!-- Slot 4 - Botão adicionar -->
+                <div class="media-slot" data-slot="3">
+                    <button class="add-media-btn" onclick="addMedia(3)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>

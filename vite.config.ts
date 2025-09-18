@@ -1,10 +1,21 @@
 import { defineConfig } from "vite";
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'src/assets', // Source folder to copy
+          dest: './'   // Destination folder in the output
+        },
+      ]
+    })
+  ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

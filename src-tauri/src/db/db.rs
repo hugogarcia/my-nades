@@ -23,7 +23,6 @@ impl Repository {
         for map in rows {
             maps.push(map?);
         }
-        print!("{:#?}", maps);
         Ok(maps)
     }    
 }
