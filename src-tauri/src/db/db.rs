@@ -1,6 +1,34 @@
+use std::sync::{Arc, Mutex};
+
 use rusqlite::{Connection, Result};
 
-pub fn init_db() -> Result<Connection> {
+pub struct Repository {
+    conn: Arc<Mutex<Connection>>,
+}
+
+impl Repository {
+    pub fn new() -> Result<Self> {
+        let conn = init_db()?;
+        Ok(Repository { conn: Arc::new(Mutex::new(conn)) })
+    }
+
+    pub fn list_maps(&self) -> Result<Vec<(i32, String, String)>> {
+        let con = self.conn.lock().unwrap();
+        let mut stmt = con.prepare("SELECT id, name, image_path FROM maps")?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+        })?;
+
+        let mut maps = Vec::new();
+        for map in rows {
+            maps.push(map?);
+        }
+        print!("{:#?}", maps);
+        Ok(maps)
+    }    
+}
+
+fn init_db() -> Result<Connection> {
     let conn = Connection::open("app.db")?;
 
     conn.execute_batch(
@@ -58,3 +86,5 @@ fn create_maps(conn: &Connection) -> Result<(), rusqlite::Error> {
 
     Ok(())
 }
+
+

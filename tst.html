@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrossel Horizontal</title>
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --hover-bg: #f8f9fa;
+            --arrow-bg: rgba(255,255,255,0.9);
+            --arrow-bg-hover: rgba(255,255,255,1);
+            --menu-bg: #ffffff;
+            --menu-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --button-bg: #007bff;
+            --button-text: #ffffff;
+            --button-hover: #0056b3;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Variables */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #121212;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+            --hover-bg: #2a2a2a;
+            --arrow-bg: rgba(26,26,26,0.9);
+            --arrow-bg-hover: rgba(26,26,26,1);
+            --menu-bg: #2a2a2a;
+            --menu-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            --button-bg: #0d6efd;
+            --button-text: #ffffff;
+            --button-hover: #0b5ed7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .carousel-container {
+            width: 100%;
+            height: 100px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+            cursor: grab;
+            user-select: none;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .menu-button {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .menu-button:hover {
+            background: var(--hover-bg);
+        }
+
+        .hamburger-line {
+            width: 22px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 1px;
+        }
+
+        .menu-button.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .menu-button.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-button.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+
+        .side-menu {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: var(--menu-bg);
+            box-shadow: var(--menu-shadow);
+            z-index: 1000;
+            transition: left 0.3s ease;
+            padding: 20px;
+        }
+
+        .side-menu.open {
+            left: 0;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .menu-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background: var(--hover-bg);
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .menu-item-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-item-text {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+            transform: scale(1.05);
+        }
+
+        .carousel-track-wrapper {
+            margin-left: 60px; /* Espaço para o botão do menu */
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .carousel-arrow {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(90deg, var(--arrow-bg) 0%, var(--arrow-bg) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            color: var(--text-secondary);
+            user-select: none;
+        }
+
+        .carousel-arrow:hover {
+            background: var(--arrow-bg-hover);
+            color: var(--text-primary);
+        }
+
+        .carousel-arrow.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .carousel-arrow.left {
+            left: 60px; /* Ajustado para não sobrepor o menu */
+        }
+
+        .carousel-arrow.right {
+            right: 0;
+        }
+
+        .carousel-container:active {
+            cursor: grabbing;
+        }
+
+        .carousel-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.3s ease;
+            will-change: transform;
+        }
+
+        .carousel-item {
+            flex: 0 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            min-width: 100px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background-color 0.2s;
+        }
+
+        .carousel-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .carousel-item .icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .carousel-item .icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-item .text {
+            font-size: 12px;
+            text-align: center;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Demo content styles */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 100px);
+            background: var(--bg-secondary);
+            transition: background-color 0.3s ease;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 15%;
+            min-width: 200px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px 15px 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .shortcut-item {
+            margin: 5px 10px;
+            padding: 12px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--hover-bg);
+        }
+
+        .shortcut-item:hover {
+            border-color: var(--border-color);
+        }
+
+        .shortcut-item.active {
+            border-color: var(--button-bg);
+            background: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .shortcut-item.active .shortcut-key,
+        .shortcut-item.active .shortcut-description {
+            color: var(--button-text);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .shortcut-key {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .shortcut-key:focus {
+            outline: none;
+            border-color: var(--button-bg);
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+        }
+
+        .shortcut-description {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 11px;
+            min-height: 20px;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        .shortcut-description:focus {
+            outline: none;
+            border-color: var(--button-bg);
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+
+        .sidebar-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-btn:hover {
+            background: var(--hover-bg);
+            border-color: var(--button-bg);
+        }
+
+        .sidebar-btn.add {
+            background: var(--button-bg);
+            color: var(--button-text);
+            border-color: var(--button-bg);
+        }
+
+        .sidebar-btn.add:hover {
+            background: var(--button-hover);
+        }
+
+        .sidebar-btn.remove {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .sidebar-btn.remove:hover {
+            background: #c82333;
+        }
+
+        .sidebar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Main Content Area */
+        .content-area {
+            flex: 1;
+            position: relative;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .content-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .floating-add-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+
+        .floating-add-btn:hover {
+            background: var(--button-hover);
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+
+        .floating-add-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+
+    <script>
+        // Theme Management
+        class ThemeManager {
+            constructor() {
+                this.currentTheme = 'dark'; // Agora inicia com dark theme como padrão
+                this.themeToggle = document.getElementById('themeToggle');
+                this.init();
+            }
+
+            init() {
+                this.applyTheme(this.currentTheme);
+                this.themeToggle.addEventListener('click', this.toggleTheme.bind(this));
+            }
+
+            toggleTheme() {
+                this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+                this.applyTheme(this.currentTheme);
+                // Não salva no localStorage para compatibilidade
+            }
+
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                this.updateToggleButton(theme);
+            }
+
+            updateToggleButton(theme) {
+                if (theme === 'dark') {
+                    this.themeToggle.innerHTML = '☀️ Light';
+                } else {
+                    this.themeToggle.innerHTML = '🌙 Dark';
+                }
+            }
+        }
+
+        // Menu Management
+        class MenuManager {
+            constructor() {
+                this.menuButton = document.getElementById('menuButton');
+                this.sideMenu = document.getElementById('sideMenu');
+                this.menuOverlay = document.getElementById('menuOverlay');
+                this.isOpen = false;
+                this.init();
+            }
+
+            init() {
+                this.menuButton.addEventListener('click', this.toggleMenu.bind(this));
+                this.menuOverlay.addEventListener('click', this.closeMenu.bind(this));
+                
+                // Fecha o menu com ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.isOpen) {
+                        this.closeMenu();
+                    }
+                });
+            }
+
+            toggleMenu() {
+                if (this.isOpen) {
+                    this.closeMenu();
+                } else {
+                    this.openMenu();
+                }
+            }
+
+            openMenu() {
+                this.isOpen = true;
+                this.sideMenu.classList.add('open');
+                this.menuOverlay.classList.add('active');
+                this.menuButton.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            closeMenu() {
+                this.isOpen = false;
+                this.sideMenu.classList.remove('open');
+                this.menuOverlay.classList.remove('active');
+                this.menuButton.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Shortcut Management
+        class ShortcutManager {
+            constructor() {
+                this.shortcuts = [];
+                this.activeShortcut = null;
+                this.nextId = 3; // Próximo ID após os exemplos
+                this.shortcutList = document.getElementById('shortcutList');
+                this.addBtn = document.getElementById('addShortcut');
+                this.removeBtn = document.getElementById('removeShortcut');
+                this.init();
+            }
+
+            init() {
+                // Event listeners para botões
+                this.addBtn.addEventListener('click', this.addShortcut.bind(this));
+                this.removeBtn.addEventListener('click', this.removeShortcut.bind(this));
+
+                // Event listeners para itens existentes
+                this.attachEventListeners();
+                
+                // Define o primeiro item como ativo
+                this.setActiveShortcut(document.querySelector('.shortcut-item[data-id="0"]'));
+            }
+
+            attachEventListeners() {
+                const items = this.shortcutList.querySelectorAll('.shortcut-item');
+                items.forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        // Só ativa se não estiver clicando nos inputs
+                        if (!e.target.matches('input, textarea')) {
+                            this.setActiveShortcut(item);
+                        }
+                    });
+
+                    // Event listeners para os inputs
+                    const inputs = item.querySelectorAll('input, textarea');
+                    inputs.forEach(input => {
+                        input.addEventListener('focus', () => {
+                            this.setActiveShortcut(item);
+                        });
+                    });
+                });
+            }
+
+            setActiveShortcut(item) {
+                // Remove active de todos os itens
+                this.shortcutList.querySelectorAll('.shortcut-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+
+                // Adiciona active ao item selecionado
+                item.classList.add('active');
+                this.activeShortcut = item;
+
+                // Habilita/desabilita botão de remoção
+                this.removeBtn.disabled = false;
+            }
+
+            addShortcut() {
+                const newItem = document.createElement('div');
+                newItem.className = 'shortcut-item';
+                newItem.dataset.id = this.nextId++;
+                
+                newItem.innerHTML = `
+                    <input type="text" class="shortcut-key" value="" placeholder="Atalho">
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho"></textarea>
+                `;
+
+                this.shortcutList.appendChild(newItem);
+                
+                // Adiciona event listeners ao novo item
+                this.attachEventListenersToItem(newItem);
+                
+                // Define como ativo e foca no primeiro campo
+                this.setActiveShortcut(newItem);
+                newItem.querySelector('.shortcut-key').focus();
+            }
+
+            removeShortcut() {
+                if (this.activeShortcut) {
+                    const itemsCount = this.shortcutList.querySelectorAll('.shortcut-item').length;
+                    
+                    if (itemsCount > 1) {
+                        // Encontra o próximo item para ativar
+                        const nextItem = this.activeShortcut.nextElementSibling || 
+                                       this.activeShortcut.previousElementSibling;
+                        
+                        // Remove o item ativo
+                        this.activeShortcut.remove();
+                        
+                        // Define o próximo item como ativo
+                        if (nextItem) {
+                            this.setActiveShortcut(nextItem);
+                        }
+                    } else {
+                        // Se for o último item, desabilita o botão de remoção
+                        this.removeBtn.disabled = true;
+                    }
+                }
+            }
+
+            attachEventListenersToItem(item) {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.matches('input, textarea')) {
+                        this.setActiveShortcut(item);
+                    }
+                });
+
+                const inputs = item.querySelectorAll('input, textarea');
+                inputs.forEach(input => {
+                    input.addEventListener('focus', () => {
+                        this.setActiveShortcut(item);
+                    });
+                });
+            }
+        }
+
+        class HorizontalCarousel {
+            constructor(container) {
+                this.container = container;
+                this.track = container.querySelector('.carousel-track');
+                this.leftArrow = container.querySelector('.carousel-arrow.left');
+                this.rightArrow = container.querySelector('.carousel-arrow.right');
+                this.isDragging = false;
+                this.startX = 0;
+                this.scrollLeft = 0;
+                this.velocity = 0;
+                this.lastX = 0;
+                this.lastTime = 0;
+                
+                this.init();
+            }
+
+            init() {
+                // Mouse events
+                this.container.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.container.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                this.container.addEventListener('mouseup', this.handleMouseUp.bind(this));
+                this.container.addEventListener('mouseleave', this.handleMouseUp.bind(this));
+
+                // Touch events para dispositivos móveis
+                this.container.addEventListener('touchstart', this.handleTouchStart.bind(this));
+                this.container.addEventListener('touchmove', this.handleTouchMove.bind(this));
+                this.container.addEventListener('touchend', this.handleTouchEnd.bind(this));
+
+                // Eventos das setas
+                this.leftArrow.addEventListener('click', this.scrollLeftArrow.bind(this));
+                this.rightArrow.addEventListener('click', this.scrollRightArrow.bind(this));
+
+                // Previne o comportamento padrão de arrastar imagens/links
+                this.container.addEventListener('dragstart', (e) => e.preventDefault());
+
+                // Monitora mudanças de tamanho da janela
+                window.addEventListener('resize', this.updateArrows.bind(this));
+                
+                // Atualiza as setas inicialmente
+                setTimeout(() => this.updateArrows(), 100);
+            }
+
+            scrollLeftArrow() {
+                const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+                const currentTranslate = this.getCurrentTranslateX();
+                const newTranslate = currentTranslate + containerWidth * 0.7;
+                
+                this.track.style.transition = 'transform 0.4s ease';
+                this.setTranslateX(this.constrainTranslate(newTranslate));
+                
+                setTimeout(() => this.updateArrows(), 400);
+            }
+
+            scrollRightArrow() {
+                const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+                const currentTranslate = this.getCurrentTranslateX();
+                const newTranslate = currentTranslate - containerWidth * 0.7;
+                
+                this.track.style.transition = 'transform 0.4s ease';
+                this.setTranslateX(this.constrainTranslate(newTranslate));
+                
+                setTimeout(() => this.updateArrows(), 400);
+            }
+
+            updateArrows() {
+                const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+                const trackWidth = this.track.scrollWidth;
+                const currentTranslate = this.getCurrentTranslateX();
+                
+                // Mostra/esconde seta esquerda
+                if (currentTranslate >= 0) {
+                    this.leftArrow.classList.remove('visible');
+                } else {
+                    this.leftArrow.classList.add('visible');
+                }
+                
+                // Mostra/esconde seta direita
+                const maxTranslate = Math.min(0, containerWidth - trackWidth);
+                if (currentTranslate <= maxTranslate + 5) { // 5px de tolerância
+                    this.rightArrow.classList.remove('visible');
+                } else {
+                    this.rightArrow.classList.add('visible');
+                }
+            }
+
+            handleMouseDown(e) {
+                e.preventDefault();
+                this.isDragging = true;
+                this.startX = e.pageX - this.container.offsetLeft;
+                this.scrollLeft = this.getCurrentTranslateX();
+                this.lastX = e.pageX;
+                this.lastTime = Date.now();
+                this.velocity = 0;
+                
+                // Remove a transição durante o arrasto
+                this.track.style.transition = 'none';
+            }
+
+            handleMouseMove(e) {
+                if (!this.isDragging) return;
+                
+                e.preventDefault();
+                const x = e.pageX - this.container.offsetLeft;
+                const walk = (x - this.startX) * 1; // Multiplicador para velocidade
+                const newTranslateX = this.scrollLeft + walk;
+                
+                // Calcula a velocidade
+                const currentTime = Date.now();
+                const timeDelta = currentTime - this.lastTime;
+                if (timeDelta > 0) {
+                    this.velocity = (e.pageX - this.lastX) / timeDelta;
+                }
+                this.lastX = e.pageX;
+                this.lastTime = currentTime;
+                
+                this.setTranslateX(this.constrainTranslate(newTranslateX));
+                this.updateArrows();
+                this.updateArrows();
+            }
+
+            handleMouseUp() {
+                if (!this.isDragging) return;
+                
+                this.isDragging = false;
+                
+                // Restaura a transição
+                this.track.style.transition = 'transform 0.3s ease';
+                
+                // Aplica momentum se a velocidade for significativa
+                if (Math.abs(this.velocity) > 0.5) {
+                    const momentum = this.velocity * 200; // Ajusta o fator de momentum
+                    const currentTranslate = this.getCurrentTranslateX();
+                    const newTranslate = currentTranslate + momentum;
+                    this.setTranslateX(this.constrainTranslate(newTranslate));
+                }
+                
+                // Atualiza as setas após o momentum
+                setTimeout(() => this.updateArrows(), 300);
+            }
+
+            handleTouchStart(e) {
+                const touch = e.touches[0];
+                this.isDragging = true;
+                this.startX = touch.pageX - this.container.offsetLeft;
+                this.scrollLeft = this.getCurrentTranslateX();
+                this.track.style.transition = 'none';
+            }
+
+            handleTouchMove(e) {
+                if (!this.isDragging) return;
+                
+                e.preventDefault();
+                const touch = e.touches[0];
+                const x = touch.pageX - this.container.offsetLeft;
+                const walk = (x - this.startX) * 1;
+                const newTranslateX = this.scrollLeft + walk;
+                
+                this.setTranslateX(this.constrainTranslate(newTranslateX));
+            }
+
+            handleTouchEnd() {
+                this.isDragging = false;
+                this.track.style.transition = 'transform 0.3s ease';
+                setTimeout(() => this.updateArrows(), 300);
+            }
+
+            getCurrentTranslateX() {
+                const style = window.getComputedStyle(this.track);
+                const matrix = new WebKitCSSMatrix(style.transform);
+                return matrix.m41 || 0;
+            }
+
+            setTranslateX(x) {
+                this.track.style.transform = `translateX(${x}px)`;
+            }
+
+            constrainTranslate(translateX) {
+                const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+                const trackWidth = this.track.scrollWidth;
+                const maxTranslate = 0;
+                const minTranslate = Math.min(0, containerWidth - trackWidth);
+                
+                return Math.max(minTranslate, Math.min(maxTranslate, translateX));
+            }
+        }
+
+        // Inicializa todos os componentes quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa o gerenciador de temas
+            const themeManager = new ThemeManager();
+            
+            // Inicializa o menu
+            const menuManager = new MenuManager();
+            
+            // Inicializa o carrossel
+            const carousel = document.getElementById('carousel');
+            new HorizontalCarousel(carousel);
+
+            // Inicializa o gerenciador de atalhos
+            const shortcutManager = new ShortcutManager();
+
+            // Event listener para o botão flutuante
+            document.getElementById('floatingAdd').addEventListener('click', () => {
+                alert('Botão flutuante clicado! Aguardando próximas instruções...');
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+    
+    <!-- Side Menu -->
+    <div class="side-menu" id="sideMenu">
+        <div class="menu-header">Configurações</div>
+        
+        <div class="menu-item">
+            <div class="menu-item-icon">🏠</div>
+            <div class="menu-item-text">Início</div>
+        </div>
+        
+        <div class="menu-item">
+            <div class="menu-item-icon">⚙️</div>
+            <div class="menu-item-text">Configurações</div>
+        </div>
+        
+        <div class="menu-item">
+            <div class="menu-item-icon">🎨</div>
+            <div class="menu-item-text">Tema</div>
+            <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+        </div>
+        
+        <div class="menu-item">
+            <div class="menu-item-icon">ℹ️</div>
+            <div class="menu-item-text">Sobre</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="carousel-container" id="carousel">
+        <button class="menu-button" id="menuButton">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+        </button>
+        
+        <div class="carousel-arrow left" id="leftArrow">‹</div>
+        <div class="carousel-arrow right" id="rightArrow">›</div>
+        
+        <div class="carousel-track-wrapper">
+            <div class="carousel-track" id="carouselTrack">
+            <a href="#" class="carousel-item">
+                <div class="icon">🏠</div>
+                <div class="text">Início</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">📱</div>
+                <div class="text">Mobile</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">💻</div>
+                <div class="text">Desktop</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🎮</div>
+                <div class="text">Games</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🎵</div>
+                <div class="text">Música</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">📺</div>
+                <div class="text">TV</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🛒</div>
+                <div class="text">Shopping</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🍕</div>
+                <div class="text">Food</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">✈️</div>
+                <div class="text">Viagem</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">📚</div>
+                <div class="text">Livros</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🏋️</div>
+                <div class="text">Fitness</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🎨</div>
+                <div class="text">Arte</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🔧</div>
+                <div class="text">Ferramentas</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">📊</div>
+                <div class="text">Dados</div>
+            </a>
+            <a href="#" class="carousel-item">
+                <div class="icon">🌟</div>
+                <div class="text">Premium</div>
+            </a>
+        </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Sidebar for shortcuts -->
+        <div class="sidebar">
+            <div class="sidebar-header">Atalhos Configurados</div>
+            <div class="sidebar-content" id="shortcutList">
+                <div class="shortcut-item active" data-id="0">
+                    <input type="text" class="shortcut-key" value="F7" placeholder="Atalho">
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Abrir configurações</textarea>
+                </div>
+                <div class="shortcut-item" data-id="1">
+                    <input type="text" class="shortcut-key" value="Ctrl + F2" placeholder="Atalho">
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Salvar arquivo</textarea>
+                </div>
+                <div class="shortcut-item" data-id="2">
+                    <input type="text" class="shortcut-key" value="Alt + Tab" placeholder="Atalho">
+                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Alternar entre janelas</textarea>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <button class="sidebar-btn add" id="addShortcut">+</button>
+                <button class="sidebar-btn remove" id="removeShortcut">-</button>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="content-area">
+            <div class="content-placeholder">
+                <h2 style="color: var(--text-primary); margin-bottom: 10px;">Área Principal</h2>
+                <p style="color: var(--text-secondary);">Esta área ocupará o restante da tela.<br>Use o botão + flutuante para adicionar conteúdo.</p>
+            </div>
+            <button class="floating-add-btn" id="floatingAdd">+</button>
+        </div>
+    </div>
+
+    
+</body>
+</html>
