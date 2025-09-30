@@ -1,9 +1,3 @@
-// Função para editar atalhos
-function editShortcut(button) {
-    const shortcutInput = button.parentElement.querySelector('.shortcut-key');
-    shortcutInput.value = 'EDIT';
-}
-
 // Theme Management
 class ThemeManager {
     constructor() {
@@ -95,7 +89,7 @@ class ShortcutManager {
     }
 
     init() {
-        this.addBtn.addEventListener('click', this.addShortcut.bind(this));
+        //this.addBtn.addEventListener('click', this.addShortcut.bind(this));
         this.removeBtn.addEventListener('click', this.removeShortcut.bind(this));
 
         this.attachEventListeners();
@@ -132,14 +126,14 @@ class ShortcutManager {
         this.removeBtn.disabled = false;
     }
 
-    addShortcut() {
+    addShortcut(shortcutId, captureKey) {
         const newItem = document.createElement('div');
         newItem.className = 'shortcut-item';
-        newItem.dataset.id = this.nextId++;
+        newItem.dataset.id = shortcutId.toString();
         
         newItem.innerHTML = `
             <div class="shortcut-key-container">
-                <input type="text" class="shortcut-key" value="" placeholder="Atalho" readonly>
+                <input type="text" class="shortcut-key" value="${captureKey}" placeholder="Atalho" readonly>
                 <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
             </div>
             <textarea class="shortcut-description" placeholder="Descrição do atalho"></textarea>
@@ -377,4 +371,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.getElementById('carousel');
     new HorizontalCarousel(carousel);
     const shortcutManager = new ShortcutManager();
+    window.shortcutManager = shortcutManager;
 });

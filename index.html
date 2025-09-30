@@ -56,23 +56,9 @@
                     </div>
                     <textarea class="shortcut-description" placeholder="Descrição do atalho">Abrir configurações</textarea>
                 </div>
-                <div class="shortcut-item" data-id="1">
-                    <div class="shortcut-key-container">
-                        <input type="text" class="shortcut-key" value="Ctrl + F2" placeholder="Atalho" readonly>
-                        <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
-                    </div>
-                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Salvar arquivo</textarea>
-                </div>
-                <div class="shortcut-item" data-id="2">
-                    <div class="shortcut-key-container">
-                        <input type="text" class="shortcut-key" value="Alt + Tab" placeholder="Atalho" readonly>
-                        <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
-                    </div>
-                    <textarea class="shortcut-description" placeholder="Descrição do atalho">Alternar entre janelas</textarea>
-                </div>
             </div>
             <div class="sidebar-footer">
-                <button class="sidebar-btn add" id="addShortcut">+</button>
+                <button class="sidebar-btn add" id="addShortcut" onclick="addShortcut(this)">+</button>
                 <button class="sidebar-btn remove" id="removeShortcut">-</button>
             </div>
         </div>
@@ -108,5 +94,16 @@
             </div>
         </div>
     </div>
+
+    <!-- Popup para capturar atalho -->
+    <div id="shortcutPopup" class="popup hidden">
+        <div class="popup-content">
+            <p>Pressione a tecla desejada...</p>
+            <div id="capturedKey" class="captured-key">...</div>
+            <button id="confirmShortcut">Confirmar</button>
+            <button id="cancelShortcut">Cancelar</button>
+        </div>
+    </div>
+
 </body>
 </html>

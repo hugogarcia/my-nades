@@ -258,10 +258,32 @@ body {
     text-decoration: none;
     color: var(--text-primary);
     transition: background-color 0.2s;
+    position: relative; /* Adicione isso */
 }
 
 .carousel-item:hover {
     background-color: var(--hover-bg);
+}
+
+/* Adicione essa nova classe */
+.carousel-item.active {
+    background-color: var(--button-bg);
+}
+
+.carousel-item.active .text {
+    color: var(--button-text);
+    font-weight: bold;
+}
+
+/* Opcional: borda inferior para destacar */
+.carousel-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--button-text);
 }
 
 .carousel-item .icon {
@@ -575,4 +597,88 @@ body {
 .remove-media-btn:hover {
     background: rgba(200, 35, 51, 1);
     transform: scale(1.1);
+}
+
+/* Popup Styles */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: opacity 0.3s ease;
+}
+
+.popup.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.popup-content {
+    background: var(--menu-bg);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: var(--menu-shadow);
+    min-width: 300px;
+    max-width: 400px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.popup-content p {
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.captured-key {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--button-bg);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup-content button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 5px;
+}
+
+#confirmShortcut {
+    background: var(--button-bg);
+    color: var(--button-text);
+}
+
+#confirmShortcut:hover {
+    background: var(--button-hover);
+}
+
+#cancelShortcut {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+#cancelShortcut:hover {
+    background: var(--hover-bg);
 }

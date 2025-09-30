@@ -13,8 +13,8 @@ impl Repository {
     }
 
     pub fn list_maps(&self) -> Result<Vec<(i32, String, String)>> {
-        let con = self.conn.lock().unwrap();
-        let mut stmt = con.prepare("SELECT id, name, image_path FROM maps")?;
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT id, name, image_path FROM maps")?;
         let rows = stmt.query_map([], |row| {
             Ok((row.get(0)?, row.get(1)?, row.get(2)?))
         })?;
@@ -24,7 +24,34 @@ impl Repository {
             maps.push(map?);
         }
         Ok(maps)
-    }    
+    }
+
+    pub fn remove_shortcut_reference(&self, map_id: i32, shortcut: &str) -> Result<(), rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "UPDATE shortcuts SET shortcut = ?1 WHERE map_id = ?2 AND shortcut = ?3",
+            ("", map_id, shortcut),
+        )?;
+        Ok(())
+    }
+
+    pub fn save_shortcut(&self, map_id: i32, description: &str, shortcut: &str) -> Result<i64, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO shortcuts (map_id, description, shortcut) VALUES (?1, ?2, ?3)",
+            (map_id, description, shortcut),
+        )?;
+        Ok(conn.last_insert_rowid())
+    }
+
+    pub fn edit_shortcut(&self, map_id: i32, shortcut_id: i64, description: &str, shortcut: &str) -> Result<(), rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "UPDATE shortcuts SET description = ?1, shortcut = ?2 WHERE id = ?3 AND map_id = ?4",
+            (description, shortcut, shortcut_id, map_id),
+        )?;
+        Ok(())
+    }
 }
 
 fn init_db() -> Result<Connection> {
@@ -85,5 +112,3 @@ fn create_maps(conn: &Connection) -> Result<(), rusqlite::Error> {
 
     Ok(())
 }
-
-
