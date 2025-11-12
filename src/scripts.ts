@@ -1,3 +1,5 @@
+import { invoke } from "@tauri-apps/api/core";
+
 // Theme Management
 export class ThemeManager {
     private currentTheme: 'light' | 'dark';
@@ -87,22 +89,24 @@ export class MenuManager {
 // Shortcut Management
 export class ShortcutManager {
     private activeShortcut: HTMLElement | null;
-    private nextId: number;
     private shortcutList: HTMLElement;
-    private addBtn: HTMLButtonElement;
     private removeBtn: HTMLButtonElement;
 
     constructor() {
         this.activeShortcut = null;
-        this.nextId = 3;
         this.shortcutList = document.getElementById('shortcutList') as HTMLElement;
-        this.addBtn = document.getElementById('addShortcut') as HTMLButtonElement;
         this.removeBtn = document.getElementById('removeShortcut') as HTMLButtonElement;
         this.init();
     }
 
     private init(): void {
-        this.removeBtn.addEventListener('click', this.removeShortcut.bind(this));
+        this.removeBtn.addEventListener('click', async () => {
+            try {
+                await this.removeShortcut();                
+            } catch (error) {
+                await invoke("log_message", { message: `Erro ao remover: ${error}` });
+            }
+        });
         this.attachEventListeners();
         
         const firstItem = document.querySelector('.shortcut-item[data-id="0"]') as HTMLElement;
@@ -115,7 +119,7 @@ export class ShortcutManager {
         this.shortcutList.innerHTML = "";
 
         newShortcuts.forEach((s) => {            
-            this.addShortcut(s.id, s.shortcut, s.description, false);
+            this.addShortcut(s, false);
         });
 
         const firstItem = this.shortcutList.querySelector('.shortcut-item') as HTMLElement;
@@ -154,17 +158,18 @@ export class ShortcutManager {
         this.removeBtn.disabled = false;
     }
 
-    public addShortcut(shortcutId: number, captureKey: string, description: string, setActive: boolean = false): void {
+    public addShortcut(shortcut: ShortcutDto, setActive: boolean = false): void {
         const newItem = document.createElement('div');
         newItem.className = 'shortcut-item';
-        newItem.dataset.id = shortcutId.toString();
+        newItem.dataset.id = shortcut.id.toString();
+        newItem.dataset.mapId = shortcut.mapId.toString();
         
         newItem.innerHTML = `
             <div class="shortcut-key-container">
-                <input type="text" class="shortcut-key" value="${captureKey}" placeholder="Atalho" readonly>
+                <input type="text" class="shortcut-key" value="${shortcut.shortcut}" placeholder="Atalho" readonly>
                 <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
             </div>
-            <textarea class="shortcut-description" placeholder="Descrição do atalho">${description}</textarea>
+            <textarea class="shortcut-description" placeholder="Descrição do atalho">${shortcut.description}</textarea>
         `;
 
         this.shortcutList.appendChild(newItem);
@@ -178,7 +183,7 @@ export class ShortcutManager {
         textarea.focus();
     }
 
-    private removeShortcut(): void {
+    public async removeShortcut(): Promise<void> {
         if (this.activeShortcut) {
             const itemsCount = this.shortcutList.querySelectorAll('.shortcut-item').length;
             
@@ -186,6 +191,11 @@ export class ShortcutManager {
                 const nextItem = (this.activeShortcut.nextElementSibling || 
                                  this.activeShortcut.previousElementSibling) as HTMLElement;
                 
+                const id = this.activeShortcut.dataset.id;
+                const mapId = this.activeShortcut.dataset.mapId;
+
+                await invoke("delete_shortcut", { mapId: parseInt(mapId || '0'), shortcutId: parseInt(id || '0') });
+
                 this.activeShortcut.remove();
                 
                 if (nextItem) {

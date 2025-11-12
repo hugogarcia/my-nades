@@ -22,7 +22,8 @@ pub fn run() {
             get_maps,
             save_shortcut,
             log_message,
-            list_shortcuts_by_map
+            list_shortcuts_by_map,
+            delete_shortcut
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -64,4 +65,10 @@ fn save_shortcut(app_state: State<Arc<AppState>>, map_id: i32, shortcut: String,
 fn list_shortcuts_by_map(app_state: State<Arc<AppState>>, map_id: i32) -> Result<Vec<Shortcut>, String> {
     app_state.repo.list_shortcuts(map_id)
         .map_err(|e| format!("Error listing shortcuts: {}", e))
+}
+
+#[tauri::command]
+fn delete_shortcut(app_state: State<Arc<AppState>>, map_id: i32, shortcut_id: i64) -> Result<(), String> {
+    app_state.repo.delete_shortcut(map_id, shortcut_id)
+        .map_err(|e| format!("Error deleting shortcut: {}", e))
 }

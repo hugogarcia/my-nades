@@ -46,7 +46,7 @@ async function onMapClick(id: number) {
   if (clicked) {
     clicked.classList.add('active');
   }
-
+  
   loadShortcutsByMap(id);
 }
 
@@ -123,7 +123,13 @@ function initShortcutPopup() {
           input.value = capturedKey;
         }
       } else {
-        shortcutManager.addShortcut(shortcutId, capturedKey, '');
+        const s = <ShortcutDto>{
+          id: shortcutId,
+          mapId: mapId,
+          description: description,
+          shortcut: capturedKey
+        }
+        shortcutManager.addShortcut(s, true);
       }
 
       document.getElementById("shortcutPopup")?.classList.add("hidden");

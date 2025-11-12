@@ -83,6 +83,15 @@ impl Repository {
         }
         Ok(shortcuts)
     }
+
+    pub fn delete_shortcut(&self, map_id: i32, shortcut_id: i64) -> Result<(), rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "DELETE FROM shortcuts WHERE id = ?1 AND map_id = ?2",
+            (shortcut_id, map_id),
+        )?;
+        Ok(())
+    }
 }
 
 fn init_db() -> Result<Connection> {
