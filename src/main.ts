@@ -1,9 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { ThemeManager, MenuManager, ShortcutManager, HorizontalCarousel, addMedia, removeMedia } from "./scripts";
+import { initShortcutPopup, openShortcutPopup } from "./popup-shortcut";
 
-let currentShortcutItem: HTMLElement | null = null;
-let capturedKey: string | null = null;
-let shortcutManager: ShortcutManager;
+export let shortcutManager: ShortcutManager;
 
 async function loadMaps() {
   const maps = await invoke<Array<MapDto>>("get_maps");
@@ -46,103 +45,8 @@ async function onMapClick(id: number) {
   if (clicked) {
     clicked.classList.add('active');
   }
-  
+
   loadShortcutsByMap(id);
-}
-
-function openShortcutPopup(item: HTMLElement | null) {
-  currentShortcutItem = item;
-  capturedKey = null;
-  const capturedKeyEl = document.getElementById("capturedKey");
-  if (capturedKeyEl) {
-    capturedKeyEl.textContent = "...";
-  }
-  
-  const popup = document.getElementById("shortcutPopup");
-  if (popup) {
-    popup.classList.remove("hidden");
-  }
-
-  document.removeEventListener("keydown", captureKey);
-  document.addEventListener("keydown", captureKey);
-}
-
-function captureKey(e: KeyboardEvent) {
-  e.preventDefault();
-  capturedKey = formatKey(e);
-  const capturedKeyEl = document.getElementById("capturedKey");
-  if (capturedKeyEl) {
-    capturedKeyEl.textContent = capturedKey;
-  }
-}
-
-function formatKey(e: KeyboardEvent): string {
-  const keys: string[] = [];
-  if (e.ctrlKey) keys.push("Ctrl");
-  if (e.altKey) keys.push("Alt");
-  if (e.shiftKey) keys.push("Shift");
-  keys.push(e.key.length === 1 ? e.key.toUpperCase() : e.key);
-  return keys.join(" + ");
-}
-
-function initShortcutPopup() {
-  const confirmBtn = document.getElementById("confirmShortcut");
-  const cancelBtn = document.getElementById("cancelShortcut");
-
-  confirmBtn?.addEventListener("click", async () => {
-    if (!capturedKey) {
-      await invoke("log_message", { message: "No key captured." });
-      return;
-    }
-
-    const description = (
-      currentShortcutItem?.querySelector(".shortcut-description") as HTMLTextAreaElement
-    )?.value ?? "";
-
-    const activeMap = document.querySelector(".carousel-item.active") as HTMLElement;
-    const mapId = activeMap?.dataset ? parseInt(activeMap.dataset?.mapId ?? '') : 0;
-    
-    if (!mapId) {
-      await invoke("log_message", { message: "No active map selected." });
-      return;
-    }
-
-    let shortcutId = parseInt(currentShortcutItem?.dataset?.id ?? '0');
-
-    try {
-      shortcutId = await invoke<number>("save_shortcut", {
-        mapId,
-        shortcut: capturedKey,
-        description: description,
-        id: shortcutId || null
-      });
-
-      if (currentShortcutItem) {
-        const input = currentShortcutItem.querySelector(".shortcut-key") as HTMLInputElement;
-        if (input) {
-          input.value = capturedKey;
-        }
-      } else {
-        const s = <ShortcutDto>{
-          id: shortcutId,
-          mapId: mapId,
-          description: description,
-          shortcut: capturedKey
-        }
-        shortcutManager.addShortcut(s, true);
-      }
-
-      document.getElementById("shortcutPopup")?.classList.add("hidden");
-      document.removeEventListener("keydown", captureKey);
-    } catch (error) {
-      await invoke("log_message", { message: "Error saving shortcut " + error });
-    }
-  });
-
-  cancelBtn?.addEventListener("click", () => {
-    document.getElementById("shortcutPopup")?.classList.add("hidden");
-    document.removeEventListener("keydown", captureKey);
-  });
 }
 
 function loadShortcutsByMap(mapId: number) {
