@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
+import { ThemeManager, MenuManager, ShortcutManager, HorizontalCarousel, addMedia, removeMedia } from "./scripts";
 
 let currentShortcutItem: HTMLElement | null = null;
 let capturedKey: string | null = null;
+let shortcutManager: ShortcutManager;
 
 async function loadMaps() {
   const maps = await invoke<Array<MapDto>>("get_maps");
@@ -12,13 +14,21 @@ async function loadMaps() {
     const div = document.createElement("div");
     const classMap = idx === 0 ? "carousel-item active" : "carousel-item";
     div.innerHTML = `
-      <a href="#" class="${classMap}" data-map-id="${map.id}" onclick="onMapClick(${map.id})">
+      <a href="#" class="${classMap}" data-map-id="${map.id}">
           <div class="icon">
               <img src="${map.imagePath}">
           </div>
           <div class="text">${map.name}</div>
       </a>
     `;
+    
+    // Adiciona o evento de clique diretamente
+    const link = div.querySelector('a');
+    link?.addEventListener('click', (e) => {
+      e.preventDefault();
+      onMapClick(map.id);
+    });
+    
     container.appendChild(div);
   });
 
@@ -29,11 +39,9 @@ async function loadMaps() {
 }
 
 async function onMapClick(id: number) {
-  // Remove 'active' de todos os itens
   const items = document.querySelectorAll('.carousel-item');
   items.forEach(item => item.classList.remove('active'));
 
-  // Adiciona 'active' ao item clicado
   const clicked = document.querySelector(`.carousel-item[data-map-id="${id}"]`);
   if (clicked) {
     clicked.classList.add('active');
@@ -42,20 +50,30 @@ async function onMapClick(id: number) {
   loadShortcutsByMap(id);
 }
 
-function openShortcutPopup(item: HTMLElement) {
+function openShortcutPopup(item: HTMLElement | null) {
   currentShortcutItem = item;
   capturedKey = null;
-  (document.getElementById("capturedKey") as HTMLElement).textContent = "...";
-  document.getElementById("shortcutPopup")?.classList.remove("hidden");
+  const capturedKeyEl = document.getElementById("capturedKey");
+  if (capturedKeyEl) {
+    capturedKeyEl.textContent = "...";
+  }
+  
+  const popup = document.getElementById("shortcutPopup");
+  if (popup) {
+    popup.classList.remove("hidden");
+  }
 
-  document.addEventListener("keydown", captureKey, { once: false });
+  document.removeEventListener("keydown", captureKey);
+  document.addEventListener("keydown", captureKey);
 }
 
 function captureKey(e: KeyboardEvent) {
   e.preventDefault();
   capturedKey = formatKey(e);
-  (document.getElementById("capturedKey") as HTMLElement).textContent =
-    capturedKey;
+  const capturedKeyEl = document.getElementById("capturedKey");
+  if (capturedKeyEl) {
+    capturedKeyEl.textContent = capturedKey;
+  }
 }
 
 function formatKey(e: KeyboardEvent): string {
@@ -69,7 +87,7 @@ function formatKey(e: KeyboardEvent): string {
 
 function initShortcutPopup() {
   const confirmBtn = document.getElementById("confirmShortcut");
-  const cancelBtn = document.getElementById("cancelShortcut");  
+  const cancelBtn = document.getElementById("cancelShortcut");
 
   confirmBtn?.addEventListener("click", async () => {
     if (!capturedKey) {
@@ -78,100 +96,105 @@ function initShortcutPopup() {
     }
 
     const description = (
-      currentShortcutItem?.querySelector(
-        ".shortcut-description"
-      ) as HTMLTextAreaElement
+      currentShortcutItem?.querySelector(".shortcut-description") as HTMLTextAreaElement
     )?.value ?? "";
 
-    const activeMap = document.querySelector(
-      ".carousel-item.active"
-    ) as HTMLElement;
-
-    const mapId = activeMap ? parseInt(activeMap.dataset.mapId) : 0;
+    const activeMap = document.querySelector(".carousel-item.active") as HTMLElement;
+    const mapId = activeMap?.dataset ? parseInt(activeMap.dataset?.mapId ?? '') : 0;
+    
     if (!mapId) {
       await invoke("log_message", { message: "No active map selected." });
       return;
     }
 
-    let shortcutId = parseInt(currentShortcutItem?.dataset?.id) ?? null;
+    let shortcutId = parseInt(currentShortcutItem?.dataset?.id ?? '0');
 
-    await invoke("log_message", { message: `Map ${mapId}, shortcut ${shortcutId}, key ${captureKey}` });
     try {
       shortcutId = await invoke<number>("save_shortcut", {
         mapId,
         shortcut: capturedKey,
         description: description,
-        id: shortcutId
+        id: shortcutId || null
       });
+
+      if (currentShortcutItem) {
+        const input = currentShortcutItem.querySelector(".shortcut-key") as HTMLInputElement;
+        if (input) {
+          input.value = capturedKey;
+        }
+      } else {
+        shortcutManager.addShortcut(shortcutId, capturedKey, '');
+      }
+
+      document.getElementById("shortcutPopup")?.classList.add("hidden");
+      document.removeEventListener("keydown", captureKey);
     } catch (error) {
       await invoke("log_message", { message: "Error saving shortcut " + error });
-      return;
-    }      
-    
-    // exists
-    if (currentShortcutItem) {
-      const input = currentShortcutItem.querySelector(
-        ".shortcut-key.ac"
-      ) as HTMLInputElement;
-      input.value = capturedKey;
-      currentShortcutItem = null;
-    }else {
-      (window as any).shortcutManager.addShortcut(shortcutId, capturedKey, '', true);
     }
-
-
-    document.getElementById("shortcutPopup")?.classList.add("hidden");
   });
 
   cancelBtn?.addEventListener("click", () => {
     document.getElementById("shortcutPopup")?.classList.add("hidden");
+    document.removeEventListener("keydown", captureKey);
   });
 }
 
 function loadShortcutsByMap(mapId: number) {
   invoke<Array<ShortcutDto>>("list_shortcuts_by_map", { mapId })
     .then(shortcuts => {
-      (window as any).shortcutManager.setShortcuts(shortcuts);
+      shortcutManager.setShortcuts(shortcuts);
     })
     .catch(async (error) => {
       await invoke("log_message", { message: "Error loading shortcuts: " + error });
     });
 }
 
-function removeShortcut() {
-    if (this.activeShortcut) {
-        const itemsCount = this.shortcutList.querySelectorAll('.shortcut-item').length;
-        
-        if (itemsCount > 1) {
-            const nextItem = this.activeShortcut.nextElementSibling || 
-                            this.activeShortcut.previousElementSibling;
-            
-            this.activeShortcut.remove();
-            
-            if (nextItem) {
-                this.setActiveShortcut(nextItem);
-            }
-        } else {
-            this.removeBtn.disabled = true;
-        }
-    }
-}
-
-// usado pelo botão ✏️ no HTML
-(window as any).editShortcut = (button: HTMLElement) => {
+function editShortcut(button: HTMLElement): void {
   const item = button.closest(".shortcut-item") as HTMLElement;
   openShortcutPopup(item);
-};
-
-(window as any).addShortcut = () => {
-  openShortcutPopup(null as any);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  initShortcutPopup();
-});
+function addShortcut(): void {
+  openShortcutPopup(null);
+}
 
-(window as any).onMapClick = onMapClick;
-(window as any).loadShortcutsByMap = loadShortcutsByMap
+// Declare tipos globais
+declare global {
+  interface Window {
+    addMedia: typeof addMedia;
+    removeMedia: typeof removeMedia;
+    editShortcut: (button: HTMLElement) => void;
+    addShortcut: () => void;
+  }
+}
 
-loadMaps();
+// INICIALIZAÇÃO - SEM DOMContentLoaded
+async function init() {
+  console.log("Iniciando aplicação...");
+  
+  try {
+    const themeManager = new ThemeManager();    
+    const menuManager = new MenuManager();
+    
+    const carouselEl = document.getElementById('carousel');
+    if (carouselEl) {
+      new HorizontalCarousel(carouselEl);
+    }
+    
+    shortcutManager = new ShortcutManager();
+    window.addMedia = addMedia;
+    window.removeMedia = removeMedia;
+    window.editShortcut = editShortcut;
+    window.addShortcut = addShortcut;
+
+    initShortcutPopup();
+    
+    await loadMaps();
+    console.log("Maps carregados");
+  } catch (error) {
+    console.error("Erro na inicialização:", error);
+  }
+}
+
+// Executar quando o módulo carregar
+init();

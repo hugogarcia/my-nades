@@ -1,24 +1,28 @@
 {
   "compilerOptions": {
-    "target": "ES2023",
+    "target": "ES2020", 
     "useDefineForClassFields": true,
     "allowJs": true,
-    "module": "commonjs",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
 
     /* Bundler mode */
-    "moduleResolution": "node",
-    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler", // Mudado de node para bundler
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false, // Mudado para false se você quer gerar .js
+    "outDir": "./dist", // Adicione onde os arquivos JS serão gerados
 
     /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "strict": false, // Recomendo true para aproveitar TypeScript
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    
+    /* Adicionais recomendados */
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"]
+  "include": ["src/**/*"], // Mais específico
+  "exclude": ["node_modules", "dist"]
 }

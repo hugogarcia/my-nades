@@ -1,27 +1,30 @@
 // Theme Management
-class ThemeManager {
+export class ThemeManager {
+    private currentTheme: 'light' | 'dark';
+    private themeToggle: HTMLButtonElement;
+
     constructor() {
         this.currentTheme = 'dark';
-        this.themeToggle = document.getElementById('themeToggle');
+        this.themeToggle = document.getElementById('themeToggle') as HTMLButtonElement;
         this.init();
     }
 
-    init() {
+    private init(): void {
         this.applyTheme(this.currentTheme);
         this.themeToggle.addEventListener('click', this.toggleTheme.bind(this));
     }
 
-    toggleTheme() {
+    private toggleTheme(): void {
         this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
         this.applyTheme(this.currentTheme);
     }
 
-    applyTheme(theme) {
+    private applyTheme(theme: 'light' | 'dark'): void {
         document.documentElement.setAttribute('data-theme', theme);
         this.updateToggleButton(theme);
     }
 
-    updateToggleButton(theme) {
+    private updateToggleButton(theme: 'light' | 'dark'): void {
         if (theme === 'dark') {
             this.themeToggle.innerHTML = '☀️ Light';
         } else {
@@ -31,27 +34,32 @@ class ThemeManager {
 }
 
 // Menu Management
-class MenuManager {
+export class MenuManager {
+    private menuButton: HTMLButtonElement;
+    private sideMenu: HTMLElement;
+    private menuOverlay: HTMLElement;
+    private isOpen: boolean;
+
     constructor() {
-        this.menuButton = document.getElementById('menuButton');
-        this.sideMenu = document.getElementById('sideMenu');
-        this.menuOverlay = document.getElementById('menuOverlay');
+        this.menuButton = document.getElementById('menuButton') as HTMLButtonElement;
+        this.sideMenu = document.getElementById('sideMenu') as HTMLElement;
+        this.menuOverlay = document.getElementById('menuOverlay') as HTMLElement;
         this.isOpen = false;
         this.init();
     }
 
-    init() {
+    private init(): void {
         this.menuButton.addEventListener('click', this.toggleMenu.bind(this));
         this.menuOverlay.addEventListener('click', this.closeMenu.bind(this));
         
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', (e: KeyboardEvent) => {
             if (e.key === 'Escape' && this.isOpen) {
                 this.closeMenu();
             }
         });
     }
 
-    toggleMenu() {
+    private toggleMenu(): void {
         if (this.isOpen) {
             this.closeMenu();
         } else {
@@ -59,7 +67,7 @@ class MenuManager {
         }
     }
 
-    openMenu() {
+    private openMenu(): void {
         this.isOpen = true;
         this.sideMenu.classList.add('open');
         this.menuOverlay.classList.add('active');
@@ -67,7 +75,7 @@ class MenuManager {
         document.body.style.overflow = 'hidden';
     }
 
-    closeMenu() {
+    private closeMenu(): void {
         this.isOpen = false;
         this.sideMenu.classList.remove('open');
         this.menuOverlay.classList.remove('active');
@@ -77,70 +85,76 @@ class MenuManager {
 }
 
 // Shortcut Management
-class ShortcutManager {
+export class ShortcutManager {
+    private activeShortcut: HTMLElement | null;
+    private nextId: number;
+    private shortcutList: HTMLElement;
+    private addBtn: HTMLButtonElement;
+    private removeBtn: HTMLButtonElement;
+
     constructor() {
         this.activeShortcut = null;
         this.nextId = 3;
-        this.shortcutList = document.getElementById('shortcutList');
-        this.addBtn = document.getElementById('addShortcut');
-        this.removeBtn = document.getElementById('removeShortcut');
+        this.shortcutList = document.getElementById('shortcutList') as HTMLElement;
+        this.addBtn = document.getElementById('addShortcut') as HTMLButtonElement;
+        this.removeBtn = document.getElementById('removeShortcut') as HTMLButtonElement;
         this.init();
     }
 
-    init() {
-        //this.addBtn.addEventListener('click', this.addShortcut.bind(this));
+    private init(): void {
         this.removeBtn.addEventListener('click', this.removeShortcut.bind(this));
-
         this.attachEventListeners();
         
-        this.setActiveShortcut(document.querySelector('.shortcut-item[data-id="0"]'));
-    }
-
-    setShortcuts(newShortcuts) {
-        // Limpa a lista atual
-        this.shortcutList.innerHTML = "";
-
-        // Adiciona os novos atalhos
-        newShortcuts.forEach(({ id, _mapId, description, shortcut }, idx) => {            
-            this.addShortcut(id, shortcut, description);
-        });
-
-        const firstItem = this.shortcutList.querySelector('.shortcut-item');
+        const firstItem = document.querySelector('.shortcut-item[data-id="0"]') as HTMLElement;
         if (firstItem) {
             this.setActiveShortcut(firstItem);
         }
     }
 
-    attachEventListeners() {
+    public setShortcuts(newShortcuts: ShortcutDto[]): void {
+        this.shortcutList.innerHTML = "";
+
+        newShortcuts.forEach((s) => {            
+            this.addShortcut(s.id, s.shortcut, s.description, false);
+        });
+
+        const firstItem = this.shortcutList.querySelector('.shortcut-item') as HTMLElement;
+        if (firstItem) {
+            this.setActiveShortcut(firstItem);
+        }
+    }
+
+    private attachEventListeners(): void {
         const items = this.shortcutList.querySelectorAll('.shortcut-item');
         items.forEach(item => {
-            item.addEventListener('click', (e) => {
-                if (!e.target.matches('input, textarea, button')) {
-                    this.setActiveShortcut(item);
+            const htmlItem = item as HTMLElement;
+            htmlItem.addEventListener('click', (e: Event) => {
+                const target = e.target as HTMLElement;
+                if (!target.matches('input, textarea, button')) {
+                    this.setActiveShortcut(htmlItem);
                 }
             });
 
-            const inputs = item.querySelectorAll('input, textarea');
+            const inputs = htmlItem.querySelectorAll('input, textarea');
             inputs.forEach(input => {
                 input.addEventListener('focus', () => {
-                    this.setActiveShortcut(item);
+                    this.setActiveShortcut(htmlItem);
                 });
             });
         });
     }
 
-    setActiveShortcut(item) {
+    public setActiveShortcut(item: HTMLElement): void {
         this.shortcutList.querySelectorAll('.shortcut-item').forEach(i => {
             i.classList.remove('active');
         });
 
         item.classList.add('active');
         this.activeShortcut = item;
-
         this.removeBtn.disabled = false;
     }
 
-    addShortcut(shortcutId, captureKey, description, setActive) {
+    public addShortcut(shortcutId: number, captureKey: string, description: string, setActive: boolean = false): void {
         const newItem = document.createElement('div');
         newItem.className = 'shortcut-item';
         newItem.dataset.id = shortcutId.toString();
@@ -154,23 +168,23 @@ class ShortcutManager {
         `;
 
         this.shortcutList.appendChild(newItem);
-        
         this.attachEventListenersToItem(newItem);
         
         if (setActive) {
             this.setActiveShortcut(newItem);
         }
 
-        newItem.querySelector('.shortcut-description').focus();
+        const textarea = newItem.querySelector('.shortcut-description') as HTMLTextAreaElement;
+        textarea.focus();
     }
 
-    removeShortcut() {
+    private removeShortcut(): void {
         if (this.activeShortcut) {
             const itemsCount = this.shortcutList.querySelectorAll('.shortcut-item').length;
             
             if (itemsCount > 1) {
-                const nextItem = this.activeShortcut.nextElementSibling || 
-                                this.activeShortcut.previousElementSibling;
+                const nextItem = (this.activeShortcut.nextElementSibling || 
+                                 this.activeShortcut.previousElementSibling) as HTMLElement;
                 
                 this.activeShortcut.remove();
                 
@@ -183,9 +197,10 @@ class ShortcutManager {
         }
     }
 
-    attachEventListenersToItem(item) {
-        item.addEventListener('click', (e) => {
-            if (!e.target.matches('input, textarea, button')) {
+    private attachEventListenersToItem(item: HTMLElement): void {
+        item.addEventListener('click', (e: Event) => {
+            const target = e.target as HTMLElement;
+            if (!target.matches('input, textarea, button')) {
                 this.setActiveShortcut(item);
             }
         });
@@ -199,12 +214,23 @@ class ShortcutManager {
     }
 }
 
-class HorizontalCarousel {
-    constructor(container) {
+export class HorizontalCarousel {
+    private container: HTMLElement;
+    private track: HTMLElement;
+    private leftArrow: HTMLElement;
+    private rightArrow: HTMLElement;
+    private isDragging: boolean;
+    private startX: number;
+    private scrollLeft: number;
+    private velocity: number;
+    private lastX: number;
+    private lastTime: number;
+
+    constructor(container: HTMLElement) {
         this.container = container;
-        this.track = container.querySelector('.carousel-track');
-        this.leftArrow = container.querySelector('.carousel-arrow.left');
-        this.rightArrow = container.querySelector('.carousel-arrow.right');
+        this.track = container.querySelector('.carousel-track') as HTMLElement;
+        this.leftArrow = container.querySelector('.carousel-arrow.left') as HTMLElement;
+        this.rightArrow = container.querySelector('.carousel-arrow.right') as HTMLElement;
         this.isDragging = false;
         this.startX = 0;
         this.scrollLeft = 0;
@@ -215,7 +241,7 @@ class HorizontalCarousel {
         this.init();
     }
 
-    init() {
+    private init(): void {
         this.container.addEventListener('mousedown', this.handleMouseDown.bind(this));
         this.container.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.container.addEventListener('mouseup', this.handleMouseUp.bind(this));
@@ -228,15 +254,16 @@ class HorizontalCarousel {
         this.leftArrow.addEventListener('click', this.scrollLeftArrow.bind(this));
         this.rightArrow.addEventListener('click', this.scrollRightArrow.bind(this));
 
-        this.container.addEventListener('dragstart', (e) => e.preventDefault());
+        this.container.addEventListener('dragstart', (e: Event) => e.preventDefault());
 
         window.addEventListener('resize', this.updateArrows.bind(this));
         
         setTimeout(() => this.updateArrows(), 100);
     }
 
-    scrollLeftArrow() {
-        const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+    private scrollLeftArrow(): void {
+        const wrapper = this.container.querySelector('.carousel-track-wrapper') as HTMLElement;
+        const containerWidth = wrapper.offsetWidth;
         const currentTranslate = this.getCurrentTranslateX();
         const newTranslate = currentTranslate + containerWidth * 0.7;
         
@@ -246,8 +273,9 @@ class HorizontalCarousel {
         setTimeout(() => this.updateArrows(), 400);
     }
 
-    scrollRightArrow() {
-        const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+    private scrollRightArrow(): void {
+        const wrapper = this.container.querySelector('.carousel-track-wrapper') as HTMLElement;
+        const containerWidth = wrapper.offsetWidth;
         const currentTranslate = this.getCurrentTranslateX();
         const newTranslate = currentTranslate - containerWidth * 0.7;
         
@@ -257,8 +285,9 @@ class HorizontalCarousel {
         setTimeout(() => this.updateArrows(), 400);
     }
 
-    updateArrows() {
-        const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+    private updateArrows(): void {
+        const wrapper = this.container.querySelector('.carousel-track-wrapper') as HTMLElement;
+        const containerWidth = wrapper.offsetWidth;
         const trackWidth = this.track.scrollWidth;
         const currentTranslate = this.getCurrentTranslateX();
         
@@ -276,7 +305,7 @@ class HorizontalCarousel {
         }
     }
 
-    handleMouseDown(e) {
+    private handleMouseDown(e: MouseEvent): void {
         e.preventDefault();
         this.isDragging = true;
         this.startX = e.pageX - this.container.offsetLeft;
@@ -288,7 +317,7 @@ class HorizontalCarousel {
         this.track.style.transition = 'none';
     }
 
-    handleMouseMove(e) {
+    private handleMouseMove(e: MouseEvent): void {
         if (!this.isDragging) return;
         
         e.preventDefault();
@@ -308,7 +337,7 @@ class HorizontalCarousel {
         this.updateArrows();
     }
 
-    handleMouseUp() {
+    private handleMouseUp(): void {
         if (!this.isDragging) return;
         
         this.isDragging = false;
@@ -325,7 +354,7 @@ class HorizontalCarousel {
         setTimeout(() => this.updateArrows(), 300);
     }
 
-    handleTouchStart(e) {
+    private handleTouchStart(e: TouchEvent): void {
         const touch = e.touches[0];
         this.isDragging = true;
         this.startX = touch.pageX - this.container.offsetLeft;
@@ -333,7 +362,7 @@ class HorizontalCarousel {
         this.track.style.transition = 'none';
     }
 
-    handleTouchMove(e) {
+    private handleTouchMove(e: TouchEvent): void {
         if (!this.isDragging) return;
         
         e.preventDefault();
@@ -346,24 +375,25 @@ class HorizontalCarousel {
         this.updateArrows();
     }
 
-    handleTouchEnd() {
+    private handleTouchEnd(): void {
         this.isDragging = false;
         this.track.style.transition = 'transform 0.3s ease';
         setTimeout(() => this.updateArrows(), 300);
     }
 
-    getCurrentTranslateX() {
+    private getCurrentTranslateX(): number {
         const style = window.getComputedStyle(this.track);
         const matrix = new WebKitCSSMatrix(style.transform);
         return matrix.m41 || 0;
     }
 
-    setTranslateX(x) {
+    private setTranslateX(x: number): void {
         this.track.style.transform = `translateX(${x}px)`;
     }
 
-    constrainTranslate(translateX) {
-        const containerWidth = this.container.querySelector('.carousel-track-wrapper').offsetWidth;
+    private constrainTranslate(translateX: number): number {
+        const wrapper = this.container.querySelector('.carousel-track-wrapper') as HTMLElement;
+        const containerWidth = wrapper.offsetWidth;
         const trackWidth = this.track.scrollWidth;
         const maxTranslate = 0;
         const minTranslate = Math.min(0, containerWidth - trackWidth);
@@ -373,20 +403,10 @@ class HorizontalCarousel {
 }
 
 // Funções para gerenciamento de mídia
-function addMedia(slotIndex) {
+export function addMedia(slotIndex: number): void {
     alert(`Adicionar mídia no slot ${slotIndex + 1}`);
 }
 
-function removeMedia(slotIndex) {
+export function removeMedia(slotIndex: number): void {
     alert(`Remover mídia do slot ${slotIndex + 1}`);
 }
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-    const themeManager = new ThemeManager();
-    const menuManager = new MenuManager();
-    const carousel = document.getElementById('carousel');
-    new HorizontalCarousel(carousel);
-    const shortcutManager = new ShortcutManager();
-    window.shortcutManager = shortcutManager;
-});
