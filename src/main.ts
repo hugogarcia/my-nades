@@ -4,23 +4,28 @@ let currentShortcutItem: HTMLElement | null = null;
 let capturedKey: string | null = null;
 
 async function loadMaps() {
-  const maps = await invoke<Array<[number, string, string]>>("get_maps");
+  const maps = await invoke<Array<MapDto>>("get_maps");
   const container = document.getElementById("carouselTrack");
   if (!container) return;
 
-  maps.forEach(([id, name, path], idx) => {
+  maps.forEach((map, idx) => {
     const div = document.createElement("div");
     const classMap = idx === 0 ? "carousel-item active" : "carousel-item";
     div.innerHTML = `
-      <a href="#" class="${classMap}" data-map-id="${id}" onclick="onMapClick(${id})">
+      <a href="#" class="${classMap}" data-map-id="${map.id}" onclick="onMapClick(${map.id})">
           <div class="icon">
-              <img src="${path}">
+              <img src="${map.imagePath}">
           </div>
-          <div class="text">${name}</div>
+          <div class="text">${map.name}</div>
       </a>
     `;
     container.appendChild(div);
   });
+
+  const firstMap = maps.length > 0 ? maps[0] : null;
+  if (firstMap) {
+    onMapClick(firstMap.id);
+  }
 }
 
 async function onMapClick(id: number) {
@@ -33,6 +38,8 @@ async function onMapClick(id: number) {
   if (clicked) {
     clicked.classList.add('active');
   }
+
+  loadShortcutsByMap(id);
 }
 
 function openShortcutPopup(item: HTMLElement) {
@@ -109,7 +116,7 @@ function initShortcutPopup() {
       input.value = capturedKey;
       currentShortcutItem = null;
     }else {
-      (window as any).shortcutManager.addShortcut(shortcutId, capturedKey);
+      (window as any).shortcutManager.addShortcut(shortcutId, capturedKey, '', true);
     }
 
 
@@ -119,6 +126,35 @@ function initShortcutPopup() {
   cancelBtn?.addEventListener("click", () => {
     document.getElementById("shortcutPopup")?.classList.add("hidden");
   });
+}
+
+function loadShortcutsByMap(mapId: number) {
+  invoke<Array<ShortcutDto>>("list_shortcuts_by_map", { mapId })
+    .then(shortcuts => {
+      (window as any).shortcutManager.setShortcuts(shortcuts);
+    })
+    .catch(async (error) => {
+      await invoke("log_message", { message: "Error loading shortcuts: " + error });
+    });
+}
+
+function removeShortcut() {
+    if (this.activeShortcut) {
+        const itemsCount = this.shortcutList.querySelectorAll('.shortcut-item').length;
+        
+        if (itemsCount > 1) {
+            const nextItem = this.activeShortcut.nextElementSibling || 
+                            this.activeShortcut.previousElementSibling;
+            
+            this.activeShortcut.remove();
+            
+            if (nextItem) {
+                this.setActiveShortcut(nextItem);
+            }
+        } else {
+            this.removeBtn.disabled = true;
+        }
+    }
 }
 
 // usado pelo botão ✏️ no HTML
@@ -136,5 +172,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 (window as any).onMapClick = onMapClick;
+(window as any).loadShortcutsByMap = loadShortcutsByMap
 
 loadMaps();

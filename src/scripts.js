@@ -79,7 +79,6 @@ class MenuManager {
 // Shortcut Management
 class ShortcutManager {
     constructor() {
-        this.shortcuts = [];
         this.activeShortcut = null;
         this.nextId = 3;
         this.shortcutList = document.getElementById('shortcutList');
@@ -95,6 +94,21 @@ class ShortcutManager {
         this.attachEventListeners();
         
         this.setActiveShortcut(document.querySelector('.shortcut-item[data-id="0"]'));
+    }
+
+    setShortcuts(newShortcuts) {
+        // Limpa a lista atual
+        this.shortcutList.innerHTML = "";
+
+        // Adiciona os novos atalhos
+        newShortcuts.forEach(({ id, _mapId, description, shortcut }, idx) => {            
+            this.addShortcut(id, shortcut, description);
+        });
+
+        const firstItem = this.shortcutList.querySelector('.shortcut-item');
+        if (firstItem) {
+            this.setActiveShortcut(firstItem);
+        }
     }
 
     attachEventListeners() {
@@ -126,7 +140,7 @@ class ShortcutManager {
         this.removeBtn.disabled = false;
     }
 
-    addShortcut(shortcutId, captureKey) {
+    addShortcut(shortcutId, captureKey, description, setActive) {
         const newItem = document.createElement('div');
         newItem.className = 'shortcut-item';
         newItem.dataset.id = shortcutId.toString();
@@ -136,14 +150,17 @@ class ShortcutManager {
                 <input type="text" class="shortcut-key" value="${captureKey}" placeholder="Atalho" readonly>
                 <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
             </div>
-            <textarea class="shortcut-description" placeholder="Descrição do atalho"></textarea>
+            <textarea class="shortcut-description" placeholder="Descrição do atalho">${description}</textarea>
         `;
 
         this.shortcutList.appendChild(newItem);
         
         this.attachEventListenersToItem(newItem);
         
-        this.setActiveShortcut(newItem);
+        if (setActive) {
+            this.setActiveShortcut(newItem);
+        }
+
         newItem.querySelector('.shortcut-description').focus();
     }
 

@@ -2,6 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use rusqlite::{Connection, Result};
 
+use crate::db::dto::{Map, Shortcut};
+
 pub struct Repository {
     conn: Arc<Mutex<Connection>>,
 }
@@ -12,7 +14,7 @@ impl Repository {
         Ok(Repository { conn: Arc::new(Mutex::new(conn)) })
     }
 
-    pub fn list_maps(&self) -> Result<Vec<(i32, String, String)>> {
+    pub fn list_maps(&self) -> Result<Vec<Map>, rusqlite::Error> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT id, name, image_path FROM maps")?;
         let rows = stmt.query_map([], |row| {
@@ -20,9 +22,19 @@ impl Repository {
         })?;
 
         let mut maps = Vec::new();
-        for map in rows {
-            maps.push(map?);
+        for row in rows {
+            match row {
+                Ok((id, name, image_path)) => {
+                    maps.push(Map {
+                        id,
+                        name,
+                        image_path,
+                    });
+                }
+                Err(_) => continue,
+            }
         }
+
         Ok(maps)
     }
 
@@ -51,6 +63,25 @@ impl Repository {
             (description, shortcut, shortcut_id, map_id),
         )?;
         Ok(())
+    }
+
+    pub fn list_shortcuts(&self, map_id: i32) -> Result<Vec<Shortcut>, rusqlite::Error> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT id, map_id, description, shortcut FROM shortcuts WHERE map_id = ?1")?;
+        let rows = stmt.query_map([map_id], |row| {
+            Ok(Shortcut {
+                id: row.get(0)?,
+                map_id: row.get(1)?,
+                description: row.get(2)?,
+                shortcut: row.get(3)?,
+            })
+        })?;
+
+        let mut shortcuts = Vec::new();
+        for shortcut in rows {
+            shortcuts.push(shortcut?);
+        }
+        Ok(shortcuts)
     }
 }
 
