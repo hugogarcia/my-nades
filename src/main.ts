@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { ThemeManager, MenuManager, HorizontalCarousel, addMedia, removeMedia } from "./scripts";
 import { initShortcutPopup, openShortcutPopup } from "./popup-shortcut";
 import { ShortcutManager } from "./shortcut-manager";
+import { logMessage } from "./logger";
 
 export let shortcutManager: ShortcutManager;
 
@@ -56,7 +57,7 @@ function loadShortcutsByMap(mapId: number) {
       shortcutManager.setShortcuts(shortcuts);
     })
     .catch(async (error) => {
-      await invoke("log_message", { message: "Error loading shortcuts: " + error });
+      logMessage("Error loading shortcuts: " + error);
     });
 }
 

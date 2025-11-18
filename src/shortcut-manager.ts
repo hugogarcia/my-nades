@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { logMessage } from "./logger";
 
 // Shortcut Management
 export class ShortcutManager {
@@ -20,7 +21,7 @@ export class ShortcutManager {
       try {
         await this.removeShortcut();
       } catch (error) {
-        await invoke("log_message", { message: `Erro ao remover: ${error}` });
+        logMessage(`Erro ao remover: ${error}`);
       }
     });
     this.attachEventListeners();

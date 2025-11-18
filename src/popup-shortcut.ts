@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { shortcutManager } from "./main";
+import { logMessage } from "./logger";
 
 let currentShortcutItem: HTMLElement | null = null;
 let capturedKey: string | null = null;
@@ -111,7 +112,7 @@ export function initShortcutPopup() {
 
   confirmBtn?.addEventListener("click", async () => {
     if (!capturedKey) {
-      await invoke("log_message", { message: "No key captured." });
+      logMessage("No key captured");
       return;
     }
 
@@ -123,7 +124,7 @@ export function initShortcutPopup() {
     const mapId = activeMap?.dataset ? parseInt(activeMap.dataset?.mapId ?? '') : 0;
     
     if (!mapId) {
-      await invoke("log_message", { message: "No active map selected." });
+      logMessage("No active map selected");
       return;
     }
 
@@ -156,7 +157,7 @@ export function initShortcutPopup() {
       document.getElementById("shortcutPopup")?.classList.add("hidden");
       document.removeEventListener("keydown", captureKey);
     } catch (error) {
-      await invoke("log_message", { message: "Error saving shortcut " + error });
+      logMessage("Error saving shortcut " + error);
     }
   });
 
