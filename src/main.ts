@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ThemeManager, MenuManager, ShortcutManager, HorizontalCarousel, addMedia, removeMedia } from "./scripts";
+import { ThemeManager, MenuManager, HorizontalCarousel, addMedia, removeMedia } from "./scripts";
 import { initShortcutPopup, openShortcutPopup } from "./popup-shortcut";
+import { ShortcutManager } from "./shortcut-manager";
 
 export let shortcutManager: ShortcutManager;
 
