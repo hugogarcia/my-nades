@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { logMessage } from "./logger";
+import { notify } from "./notify";
 
 // Variável para controlar o debounce
 let descriptionSaveTimeout: number | null = null;
@@ -163,15 +164,13 @@ export class ShortcutManager {
         id: shortcutId,
       });
 
-      console.log(`Descrição salva para atalho ${shortcutId}`);
-
       // Remove feedback após 500ms
       setTimeout(() => {
         textarea.style.borderColor = "";
       }, 500);
     } catch (error) {
       textarea.style.borderColor = "#dc3545";
-      logMessage(`Erro ao salvar descrição: ${error}`);
+      notify.error("Erro ao salvar descrição do atalho. Tente novamente.");
 
       setTimeout(() => {
         textarea.style.borderColor = "";
