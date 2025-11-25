@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { logMessage } from "./logger";
 
-// Shortcut Management
+// Variável para controlar o debounce
+let descriptionSaveTimeout: number | null = null;
+
 export class ShortcutManager {
   private activeShortcut: HTMLElement | null;
   private shortcutList: HTMLElement;
@@ -86,24 +88,95 @@ export class ShortcutManager {
     newItem.dataset.mapId = shortcut.mapId.toString();
 
     newItem.innerHTML = `
-            <div class="shortcut-key-container">
-                <input type="text" class="shortcut-key" value="${shortcut.shortcut}" placeholder="Atalho" readonly>
-                <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
-            </div>
-            <textarea class="shortcut-description" placeholder="Descrição do atalho">${shortcut.description}</textarea>
-        `;
+      <div class="shortcut-key-container">
+        <input type="text" class="shortcut-key" value="${shortcut.shortcut}" placeholder="Atalho" readonly>
+        <button class="edit-btn" onclick="editShortcut(this)">✏️</button>
+      </div>
+      <textarea class="shortcut-description" placeholder="Descrição do atalho">${shortcut.description}</textarea>
+    `;
 
     this.shortcutList.appendChild(newItem);
     this.attachEventListenersToItem(newItem);
 
-    if (setActive) {
-      this.setActiveShortcut(newItem);
-    }
-
+    // Adiciona auto-save no textarea
     const textarea = newItem.querySelector(
       ".shortcut-description"
     ) as HTMLTextAreaElement;
-    textarea.focus();
+    this.attachDescriptionAutoSave(textarea);
+
+    if (setActive) {
+      this.setActiveShortcut(newItem);
+      textarea.focus();
+    }
+  }
+
+  // Método para adicionar auto-save em um textarea específico
+  private attachDescriptionAutoSave(textarea: HTMLTextAreaElement): void {
+    // Salva após 1 segundo sem digitar
+    textarea.addEventListener("input", () => {
+      if (descriptionSaveTimeout !== null) {
+        clearTimeout(descriptionSaveTimeout);
+      }
+
+      descriptionSaveTimeout = window.setTimeout(() => {
+        this.saveShortcutDescription(textarea);
+      }, 1000); // 1 segundo de delay
+    });
+
+    // Salva imediatamente ao perder o foco
+    textarea.addEventListener("blur", () => {
+      // Cancela o timeout se existir
+      if (descriptionSaveTimeout !== null) {
+        clearTimeout(descriptionSaveTimeout);
+        descriptionSaveTimeout = null;
+      }
+
+      // Salva imediatamente
+      this.saveShortcutDescription(textarea);
+    });
+  }
+
+  // Método para salvar a descrição
+  private async saveShortcutDescription(
+    textarea: HTMLTextAreaElement
+  ): Promise<void> {
+    const shortcutItem = textarea.closest(".shortcut-item") as HTMLElement;
+    if (!shortcutItem) return;
+
+    const shortcutId = parseInt(shortcutItem.dataset.id ?? "0");
+    const mapId = parseInt(shortcutItem.dataset.mapId ?? "0");
+    if (!shortcutId || !mapId) return;
+
+    const description = textarea.value;
+    const shortcutKey =
+      (shortcutItem.querySelector(".shortcut-key") as HTMLInputElement)
+        ?.value ?? "";
+
+    try {
+      // Feedback visual: borda verde temporária
+      textarea.style.borderColor = "#28a745";
+
+      await invoke("save_shortcut", {
+        mapId,
+        shortcut: shortcutKey,
+        description: description,
+        id: shortcutId,
+      });
+
+      console.log(`Descrição salva para atalho ${shortcutId}`);
+
+      // Remove feedback após 500ms
+      setTimeout(() => {
+        textarea.style.borderColor = "";
+      }, 500);
+    } catch (error) {
+      textarea.style.borderColor = "#dc3545";
+      logMessage(`Erro ao salvar descrição: ${error}`);
+
+      setTimeout(() => {
+        textarea.style.borderColor = "";
+      }, 1000);
+    }
   }
 
   public async removeShortcut(): Promise<void> {
